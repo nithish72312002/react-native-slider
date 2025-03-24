@@ -153,6 +153,14 @@ export interface SliderProps
   continuousStep?: number;
 
   /**
+   * When disableSnap is true, this value determines how close (in units) the final value needs to be to a step
+   * for the slider to snap to that step when sliding is complete. For example, if step is 25 and snapThreshold is 5,
+   * releasing the slider at value 21 would snap to 25, but releasing at 19 would stay at 19.
+   * If not provided, no threshold snapping occurs.
+   */
+  snapThreshold?: number;
+
+  /**
    * Used to style and layout the Slider. See StyleSheet.js and ViewStylePropTypes.js for more info.
    */
   style?: ReactNative.StyleProp<ReactNative.ViewStyle>;

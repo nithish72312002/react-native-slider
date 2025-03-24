@@ -211,6 +211,12 @@ type Props = ViewProps &
      * The number of elements must be the same as `maximumValue`.
      */
     accessibilityIncrements?: Array<string>;
+
+    /**
+     * Threshold value to snap to the nearest step when disableSnap is true.
+     * Default value is undefined.
+     */
+    snapThreshold?: number;
   }>;
 
 const SliderComponent = (
@@ -270,11 +276,73 @@ const SliderComponent = (
         onSlidingStart(event.nativeEvent.value);
       }
     : null;
+
   const onSlidingCompleteEvent = onSlidingComplete
     ? (event: Event) => {
-        onSlidingComplete(event.nativeEvent.value);
+        let finalValue = event.nativeEvent.value;
+        
+        // Apply threshold snapping if disableSnap is true and snapThreshold is provided
+        if (localProps.disableSnap && localProps.snapThreshold !== undefined && localProps.step) {
+          // Calculate the nearest step
+          const step = localProps.step;
+          const min = localProps.minimumValue || 0;
+          
+          console.log(
+            `[SLIDER DEBUG] Snapping logic:
+             - Current value: ${finalValue}
+             - Step size: ${step}
+             - Threshold: ${localProps.snapThreshold}`
+          );
+          
+          // Calculate nearest step value
+          const stepsFromMin = Math.round((finalValue - min) / step);
+          const nearestStepValue = min + stepsFromMin * step;
+          
+          // Check if we're within the threshold of the nearest step
+          const distanceToNearestStep = Math.abs(finalValue - nearestStepValue);
+          
+          console.log(
+            `[SLIDER DEBUG] Calculations:
+             - Nearest step value: ${nearestStepValue}
+             - Distance to nearest step: ${distanceToNearestStep}
+             - Should snap: ${distanceToNearestStep <= localProps.snapThreshold}`
+          );
+          
+          if (distanceToNearestStep <= localProps.snapThreshold) {
+            // Important: This updates both the state and the underlying native component
+            finalValue = nearestStepValue;
+            
+            // Force update the UI immediately - this is critical!
+            setCurrentValue(finalValue);
+            
+            // Attempt to update native props if ref is available
+            if (forwardedRef) {
+              try {
+                // Try to access the current property safely
+                const nativeRef = 
+                  typeof forwardedRef === 'function' 
+                    ? null // Can't access .current on function refs
+                    : forwardedRef.current;
+                
+                if (nativeRef && typeof nativeRef.setNativeProps === 'function') {
+                  nativeRef.setNativeProps({ value: finalValue });
+                }
+              } catch (err) {
+                console.warn('[SLIDER] Failed to update native props:', err);
+              }
+            }
+            
+            // Notify about value change with the snapped value
+            onValueChange && onValueChange(finalValue);
+            
+            console.log(`[SLIDER DEBUG] Snapped to: ${finalValue}`);
+          }
+        }
+        
+        onSlidingComplete(finalValue);
       }
     : null;
+
   const onAccessibilityActionEvent = onAccessibilityAction
     ? (event: AccessibilityActionEvent) => {
         onAccessibilityAction(event);
@@ -387,6 +455,7 @@ SliderWithRef.defaultProps = {
     web: undefined,
     default: constants.LIMIT_MAX_VALUE,
   }),
+  snapThreshold: undefined,
 };
 
 export default SliderWithRef;
