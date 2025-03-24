@@ -95,6 +95,20 @@ type Props = ViewProps &
     step?: number;
 
     /**
+     * When true, the slider will still display step markers based on the 'step' prop,
+     * but will not snap to those values when sliding. This allows for continuous
+     * movement while preserving visual indicators.
+     * Default value is false.
+     */
+    disableSnap?: boolean;
+
+    /**
+     * Step value to use when disableSnap is true. This determines how smooth the slider movement is.
+     * Smaller values provide more continuous movement. Default value is 0.0001.
+     */
+    continuousStep?: number;
+
+    /**
      * Initial minimum value of the slider. Default value is 0.
      */
     minimumValue?: number;
@@ -223,6 +237,7 @@ const SliderComponent = (
     (localProps.maximumValue! - localProps.minimumValue!) / stepResolution;
   const stepLength = localProps.step || defaultStep;
 
+  // Generate marker positions using the specified step
   const options = Array.from(
     {
       length: (localProps.step ? defaultStep : stepResolution) + 1,
@@ -293,6 +308,11 @@ const SliderComponent = (
     }
   }, [lowerLimit, upperLimit]);
 
+  // When disableSnap is true, use the continuousStep prop or default to 0.0001 for smooth movement
+  const effectiveStep = localProps.disableSnap
+    ? localProps.continuousStep || 0.0001
+    : localProps.step;
+
   return (
     <View
       onLayout={(event) => {
@@ -312,6 +332,7 @@ const SliderComponent = (
       ) : null}
       <RCTSliderNativeComponent
         {...localProps}
+        step={effectiveStep}
         value={value}
         lowerLimit={lowerLimit}
         upperLimit={upperLimit}
@@ -356,6 +377,8 @@ SliderWithRef.defaultProps = {
   step: 0,
   inverted: false,
   tapToSeek: false,
+  disableSnap: false,
+  continuousStep: 0.0001,
   lowerLimit: Platform.select({
     web: undefined,
     default: constants.LIMIT_MIN_VALUE,

@@ -139,6 +139,20 @@ export interface SliderProps
   step?: number;
 
   /**
+   * When true, the slider will still display step markers based on the 'step' prop,
+   * but will not snap to those values when sliding. This allows for continuous
+   * movement while preserving visual indicators.
+   * Default value is false.
+   */
+  disableSnap?: boolean;
+
+  /**
+   * Step value to use when disableSnap is true. This determines how smooth the slider movement is.
+   * Smaller values provide more continuous movement. Default value is 0.0001.
+   */
+  continuousStep?: number;
+
+  /**
    * Used to style and layout the Slider. See StyleSheet.js and ViewStylePropTypes.js for more info.
    */
   style?: ReactNative.StyleProp<ReactNative.ViewStyle>;

@@ -87,8 +87,9 @@ const SlidingStepsExample = (props: SliderProps) => {
       <SliderExample
         {...props}
         minimumValue={0}
-        maximumValue={4}
-        step={1}
+        maximumValue={20}
+        step={5}
+        disableSnap={true}
         tapToSeek
         StepMarker={renderStepMarker}
         minimumTrackTintColor={'#112233'}
@@ -116,9 +117,9 @@ const SlidingStepsNumbersExample = (props: SliderProps) => {
       <SliderExample
         {...props}
         minimumValue={0}
-        maximumValue={5}
-        step={1}
-        tapToSeek
+        maximumValue={100}
+        step={25}
+        disableSnap={true}
         renderStepNumber
         StepMarker={renderStepMarker}
         minimumTrackTintColor={'#123456'}
@@ -146,8 +147,9 @@ const SlidingStepsSmallNumbersExample = (props: SliderProps) => {
       <SliderExample
         {...props}
         minimumValue={0}
-        maximumValue={5}
-        step={1}
+        maximumValue={100}
+        step={25}
+        disableSnap={true}
         tapToSeek
         renderStepNumber
         StepMarker={renderStepMarker}
@@ -332,6 +334,76 @@ const CustomComponent: FC<MarkerProps> = ({
     <View style={[styles.trackDot, styles.filled]} />
   ) : (
     <View style={[styles.trackDot, styles.empty]} />
+  );
+};
+
+const GreenMarker: FC<MarkerProps> = ({
+  stepMarked,
+  currentValue,
+  index,
+  max,
+}) => {
+  // If it's the actual marker being clicked/stepped on
+  if (stepMarked) {
+    return (
+      <View style={styles.greenMarkerOuterActive} />
+    );
+  }
+  
+  // The key logic: If currentValue is greater than the index, marker is filled
+  // This is what makes markers "fill in" as you slide
+  return currentValue > index ? (
+    <View style={styles.greenMarkerOuterActive} />
+  ) : (
+    <View style={styles.greenMarkerOuter} />
+  );
+};
+
+const GreenSliderExample = (props: SliderProps) => {
+  const [value, setValue] = useState(props.value || 0);
+  const [rawValue, setRawValue] = useState(0);
+  const [didSnap, setDidSnap] = useState(false);
+
+  const handleValueChange = (newValue: number) => {
+    setRawValue(newValue);
+    setValue(newValue);
+    setDidSnap(false);
+  };
+
+  const handleSlidingComplete = (finalValue: number) => {
+    // Check if snapping occurred by comparing with raw value
+    if (Math.abs(finalValue - rawValue) > 0.1) {
+      setDidSnap(true);
+    }
+  };
+
+  return (
+    <View style={{alignItems: 'center'}}>
+      <Text style={styles.text}>
+        {value && +value.toFixed(1)}
+        {didSnap && ' (Snapped!)'}
+      </Text>
+      <Text style={[styles.text, {fontSize: 12, color: '#888'}]}>
+        Raw value: {rawValue.toFixed(1)} 
+      </Text>
+      <Slider
+        step={25}
+        style={[styles.slider, props.style]}
+        minimumValue={0}
+        maximumValue={100}
+        disableSnap={true}
+        continuousStep={1}
+        snapThreshold={2}
+        StepMarker={GreenMarker}
+        value={value}
+        onValueChange={handleValueChange}
+        onSlidingComplete={handleSlidingComplete}
+        tapToSeek
+        thumbTintColor="#2ecc71"
+        minimumTrackTintColor="#2ecc71"
+        maximumTrackTintColor="#8888"
+      />
+    </View>
   );
 };
 
@@ -536,6 +608,20 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 1,
     backgroundColor: '#334488',
+  },
+  greenMarkerOuter: {
+    height: 12,
+    width: 12,
+    top: 3,
+    borderRadius: 6,
+    backgroundColor: '#8888',
+  },
+  greenMarkerOuterActive: {
+    height: 12,
+    width: 12,
+    top: 3,
+    borderRadius: 6,
+    backgroundColor: '#2ecc71',
   },
 });
 
@@ -742,6 +828,12 @@ export const examples: Props[] = [
     platform: 'android',
     render() {
       return <SliderExample disabled value={0.6} />;
+    },
+  },
+  {
+    title: 'Green Slider',
+    render(): React.ReactElement {
+      return <GreenSliderExample />;
     },
   },
 ];
